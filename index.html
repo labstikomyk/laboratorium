@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Inventaris - STIKOM Yogyakarta</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #2563eb; --bg: #102a71; --danger: #dc2626; --success: #10b981; --warning: #f59e0b; }
+        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #1e3a8a 0%, #102a71 100%); color: #fff; margin: 0; min-height: 100vh; }
+        .container { max-width: 1100px; margin: auto; padding: 20px; }
+        .hidden { display: none !important; }
+
+        /* Login Box */
+        .login-box { background: white; color: #334155; padding: 40px; border-radius: 25px; width: 90%; max-width: 400px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+        .login-tabs { display: flex; margin-bottom: 20px; background: #f1f5f9; border-radius: 10px; padding: 5px; }
+        .login-tab { flex: 1; padding: 10px; cursor: pointer; border-radius: 8px; font-size: 14px; font-weight: 600; transition: 0.3s; }
+        .login-tab.active { background: var(--primary); color: white; }
+        .form-group { text-align: left; margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 12px; margin-bottom: 5px; font-weight: 600; color: #64748b; }
+        .login-box input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-family: 'Poppins'; }
+
+        /* Dashboard Elements */
+        header { text-align: center; margin-bottom: 20px; }
+        .nav-tabs { display: flex; background: rgba(255,255,255,0.1); border-radius: 12px; margin: 0 auto 25px; padding: 5px; max-width: 400px; }
+        .nav-link { flex: 1; text-align: center; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.3s; }
+        .nav-link.active { background: white; color: var(--bg); }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .stat-card { background: white; border-radius: 20px; padding: 20px; text-align: center; color: #334155; }
+
+        .action-btns { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
+        .btn { padding: 12px 20px; border-radius: 12px; border: none; color: white; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-family: 'Poppins'; transition: 0.2s; }
+        .btn:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-blue { background: var(--primary); }
+        .btn-green { background: var(--success); }
+        .btn-red { background: var(--danger); }
+        .btn-orange { background: var(--warning); }
+        .btn-small { padding: 5px 10px; font-size: 11px; }
+
+        .table-section { background: white; border-radius: 20px; overflow-x: auto; color: #334155; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { background: var(--primary); color: white; padding: 15px; text-align: left; }
+        td { padding: 15px; border-bottom: 1px solid #f1f5f9; }
+
+        .badge { padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+        .bg-wait { background: #fef3c7; color: #92400e; }
+        .bg-ok { background: #d1fae5; color: #065f46; }
+
+        /* Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: #1e293b; padding: 25px; border-radius: 20px; width: 95%; max-width: 600px; color: white; }
+        input, select { width: 100%; padding: 10px; margin: 5px 0; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
+
+        /* PRINT STYLES */
+        @media print {
+            body { background: white !important; color: black !important; }
+            .no-print, .action-btns, .nav-tabs, #filterControls, .login-box, .modal-overlay { display: none !important; }
+            .container { width: 100%; max-width: 100%; padding: 0; }
+            .table-section { box-shadow: none; border: 1px solid #eee; }
+            th { background: #eee !important; color: black !important; border-bottom: 2px solid #333; }
+            td { border-bottom: 1px solid #ddd !important; }
+            .stat-card { border: 1px solid #eee; }
+            .badge { border: 1px solid #ccc; }
+            header h1 { color: black; }
+            .print-header { display: block !important; text-align: center; margin-bottom: 30px; color: black; border-bottom: 3px double #000; padding-bottom: 10px; }
+        }
+        .print-header { display: none; }
+    </style>
+</head>
+<body>
+
+<div id="loginPage" class="login-box">
+    <div style="background:var(--primary); width:50px; height:50px; border-radius:12px; margin:0 auto 15px; display:flex; align-items:center; justify-content:center; color:white;">🔒</div>
+    <h2 id="loginTitle">Login Peminjam</h2>
+    <div class="login-tabs">
+        <div id="tabUser" class="login-tab active" onclick="setLoginRole('user')">Peminjam</div>
+        <div id="tabAdmin" class="login-tab" onclick="setLoginRole('admin')">Admin Lab</div>
+    </div>
+    <div class="form-group"><label>Username</label><input type="text" id="userIn"></div>
+    <div class="form-group"><label>Password</label><input type="password" id="passIn"></div>
+    <button class="btn btn-blue" style="width:100%; justify-content: center;" onclick="checkLogin()">Masuk</button>
+</div>
+
+<div id="dashboardPage" class="container hidden">
+    <div class="print-header">
+        <h1>LAPORAN SISTEM INVENTARIS LAB</h1>
+        <h3>STIKOM Yogyakarta</h3>
+        <p id="printDate"></p>
+    </div>
+
+    <header class="no-print">
+        <h1>Sistem Inventaris Laboratorium</h1>
+        <p>STIKOM Yogyakarta - <span id="roleDisplay" style="color:var(--success); font-weight:bold;"></span></p>
+    </header>
+
+    <div class="nav-tabs no-print">
+        <div id="tabInv" class="nav-link active" onclick="switchTab('inv')">Inventaris</div>
+        <div id="tabLoan" class="nav-link" onclick="switchTab('loan')">Peminjaman</div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card"><h2 id="sTotal" style="color:var(--primary)">0</h2><p>Total Alat</p></div>
+        <div class="stat-card"><h2 id="sPinjam" style="color:var(--success)">0</h2><p>Peminjaman</p></div>
+        <div class="stat-card"><h2 id="sRusak" style="color:var(--danger)">0</h2><p>Kondisi Rusak</p></div>
+    </div>
+
+    <div class="action-btns no-print">
+        <button id="btnNewItem" class="btn btn-blue hidden" onclick="showModal('addModal')">+ Alat Baru</button>
+        <button class="btn btn-green" onclick="showModal('loanModal')">📄 Buat Peminjaman</button>
+        <button class="btn btn-orange" onclick="printReport()">🖨️ Cetak PDF</button>
+        <button class="btn btn-red" onclick="location.reload()">Logout</button>
+    </div>
+
+    <div class="table-section">
+        <table>
+            <thead id="tHead"></thead>
+            <tbody id="tBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="addModal" class="modal-overlay"><div class="modal-content">
+    <h3>Input Data Inventaris</h3>
+    <input id="inName" placeholder="Nama Alat"><input id="inSerial" placeholder="Nomor Seri">
+    <select id="inLab"><option>Audiovisual</option><option>Fotografi</option><option>Audio</option><option>Lab Editing dan Multimedia</option></select>
+    <select id="inCond"><option>Baik</option><option>Perbaikan</option><option>Rusak</option></select>
+    <button class="btn btn-blue" style="width:100%" onclick="saveInv()">Simpan Alat</button>
+    <button class="btn" style="width:100%; margin-top:10px; background:none; color:white" onclick="closeModals()">Batal</button>
+</div></div>
+
+<div id="loanModal" class="modal-overlay"><div class="modal-content">
+    <h3>Form Peminjaman Alat</h3>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+        <div><label style="font-size:12px">Nama Peminjam</label><input id="pNama"></div>
+        <div><label style="font-size:12px">NIM</label><input id="pNim"></div>
+    </div>
+    <div id="loanItemsList" style="margin:15px 0; max-height:200px; overflow-y:auto;"></div>
+    <button class="btn btn-blue btn-small" onclick="addLoanRow()">+ Tambah Alat</button>
+    <button class="btn btn-green" style="width:100%; margin-top:15px;" onclick="saveLoan()">Ajukan</button>
+    <button class="btn" style="width:100%; margin-top:10px; background:none; color:white" onclick="closeModals()">Batal</button>
+</div></div>
+
+<script>
+    let inventory = JSON.parse(localStorage.getItem("db_inv_final")) || [];
+    let loans = JSON.parse(localStorage.getItem("db_loan_final")) || [];
+    let currentTab = 'inv';
+    let currentUserRole = 'user';
+
+    function setLoginRole(role) {
+        currentUserRole = role;
+        tabUser.classList.toggle('active', role === 'user');
+        tabAdmin.classList.toggle('active', role === 'admin');
+        loginTitle.innerText = role === 'admin' ? 'Login Admin Lab' : 'Login Peminjam';
+    }
+
+    function checkLogin() {
+        const u = userIn.value; const p = passIn.value;
+        if (currentUserRole === 'admin' && u === "adminlab" && p === "lab9090") { startDashboard('admin'); } 
+        else if (currentUserRole === 'user' && u === "user" && p === "mahasiswaakd") { startDashboard('user'); }
+        else { alert("Kredensial Salah!"); }
+    }
+
+    function startDashboard(role) {
+        currentUserRole = role;
+        loginPage.classList.add('hidden');
+        dashboardPage.classList.remove('hidden');
+        roleDisplay.innerText = role;
+        if(role === 'admin') btnNewItem.classList.remove('hidden');
+        render();
+    }
+
+    function switchTab(t) { currentTab = t; render(); }
+
+    function render() {
+        const head = document.getElementById("tHead");
+        const body = document.getElementById("tBody");
+        body.innerHTML = "";
+        tabInv.className = currentTab === 'inv' ? 'nav-link active' : 'nav-link';
+        tabLoan.className = currentTab === 'loan' ? 'nav-link active' : 'nav-link';
+
+        if(currentTab === 'inv') {
+            head.innerHTML = "<tr><th>No</th><th>Nama Alat & SN</th><th>Laboratorium</th><th>Kondisi</th><th class='no-print'>Aksi</th></tr>";
+            inventory.forEach((item, idx) => {
+                body.innerHTML += `<tr><td>${idx+1}</td><td><b>${item.name}</b><br><small>${item.serial}</small></td><td>${item.lab}</td><td>${item.cond}</td><td class='no-print'>${currentUserRole==='admin'?`<button onclick="delInv(${idx})">🗑️</button>`:'-'}</td></tr>`;
+            });
+        } else {
+            head.innerHTML = "<tr><th>Peminjam</th><th>Daftar Alat</th><th>Status</th><th class='no-print'>Aksi</th></tr>";
+            loans.forEach((l, idx) => {
+                let status = l.approved ? '<span class="badge bg-ok">Disetujui</span>' : '<span class="badge bg-wait">Menunggu</span>';
+                body.innerHTML += `<tr><td><b>${l.user}</b><br>${l.nim}</td><td><small>${l.items.map(i=>i.name).join(', ')}</small></td><td>${status}</td><td class='no-print'>${currentUserRole==='admin'?`<button class="btn-blue btn-small" onclick="approveLoan(${idx})">OK</button> <button class="btn-red btn-small" onclick="delLoan(${idx})">X</button>`:'-'}</td></tr>`;
+            });
+        }
+        updateStats();
+    }
+
+    function printReport() {
+        // Set tanggal laporan
+        const now = new Date();
+        document.getElementById('printDate').innerText = "Dicetak pada: " + now.toLocaleString('id-ID');
+        
+        // Judul otomatis berdasarkan tab yang aktif
+        const reportTitle = currentTab === 'inv' ? "LAPORAN DATA INVENTARIS" : "LAPORAN DATA PEMINJAMAN ALAT";
+        document.querySelector('.print-header h1').innerText = reportTitle;
+        
+        // Panggil fungsi print browser
+        window.print();
+    }
+
+    // Fungsi pendukung lainnya (Save, Delete, dsb tetap sama)
+    function saveInv() {
+        inventory.push({ name: inName.value, serial: inSerial.value, lab: inLab.value, cond: inCond.value });
+        localStorage.setItem("db_inv_final", JSON.stringify(inventory));
+        closeModals(); render();
+    }
+    function saveLoan() {
+        const itemRows = document.querySelectorAll('.loan-item-row');
+        let selectedItems = [];
+        itemRows.forEach(row => { selectedItems.push({ name: row.querySelector('.item-select').value }); });
+        loans.push({ user: pNama.value, nim: pNim.value, items: selectedItems, approved: false });
+        localStorage.setItem("db_loan_final", JSON.stringify(loans));
+        closeModals(); render();
+    }
+    function addLoanRow() {
+        const row = document.createElement('div');
+        row.className = 'loan-item-row';
+        row.innerHTML = `<select class="item-select">${inventory.map(i=>`<option>${i.name}</option>`).join('')}</select>`;
+        document.getElementById('loanItemsList').appendChild(row);
+    }
+    function approveLoan(idx) { loans[idx].approved = true; localStorage.setItem("db_loan_final", JSON.stringify(loans)); render(); }
+    function updateStats() {
+        sTotal.innerText = inventory.length;
+        sPinjam.innerText = loans.length;
+        sRusak.innerText = inventory.filter(i => i.cond === 'Rusak').length;
+    }
+    function showModal(id) { document.getElementById(id).style.display = 'flex'; if(id==='loanModal') { loanItemsList.innerHTML=""; addLoanRow(); } }
+    function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); }
+    function delInv(i) { if(confirm("Hapus?")) { inventory.splice(i,1); localStorage.setItem("db_inv_final", JSON.stringify(inventory)); render(); } }
+    function delLoan(i) { if(confirm("Hapus?")) { loans.splice(i,1); localStorage.setItem("db_loan_final", JSON.stringify(loans)); render(); } }
+</script>
+</body>
+</html>
